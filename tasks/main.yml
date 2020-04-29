@@ -1,0 +1,53 @@
+---
+- name: Check if bat is installed
+  shell: bat --version
+  ignore_errors: yes
+  register: register_bat_version
+
+- set_fact:
+    is_bat_installed: "{% if register_bat_version.rc == 0 %}true{% else %}false{% endif%}"
+
+- name: Get current bat version
+  set_fact:
+    current_bat_version: "{{ register_bat_version.stdout }}"
+    target_bat_version: "bat {{ bat_version }}"
+  when: is_bat_installed
+
+- set_fact:
+    bat_need_update: false
+
+- set_fact:
+    bat_need_update: "{% if target_bat_version != current_bat_version %}true{% endif %}"
+  when: current_bat_version is defined
+
+- name: Check if file already dowloaded
+  stat:
+    path: "{{ bat_temp_download_path }}"
+  register: bat_install_exist
+  when: not is_bat_installed or bat_need_update
+
+- name: Download bat
+  get_url:
+    url: "{{ bat_download_url }}"
+    dest: /tmp
+    mode: '0440'
+  when: not is_bat_installed or bat_need_update
+
+- name: Unarchive bat
+  unarchive:
+    src: "{{ bat_temp_download_path }}"
+    dest: "/tmp/"
+    remote_src: yes
+  when: not is_bat_installed or bat_need_update
+
+- name: stat bat binary
+  stat:
+    path: "/tmp/{{ bat_folder_name }}/bat"
+  register: bat_binary_stat
+  when: not is_bat_installed or bat_need_update
+
+- name: Install bat binary
+  command: "mv /tmp/{{ bat_folder_name }}/bat {{ bat_binary_install_path }}/bat"
+  when: bat_binary_stat.stat.exists
+  become: true
+  when: not is_bat_installed or bat_need_update

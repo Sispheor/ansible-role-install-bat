@@ -1,0 +1,6 @@
+---
+bat_folder_name: "bat-v{{ bat_version }}-x86_64-unknown-linux-gnu"
+bat_archive_name: "{{ bat_folder_name }}.tar.gz"
+bat_download_url: "https://github.com/sharkdp/bat/releases/download/v{{ bat_version }}/{{ bat_archive_name }}"
+
+bat_temp_download_path: "/tmp/{{ bat_archive_name }}"
